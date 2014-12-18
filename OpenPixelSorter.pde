@@ -54,6 +54,12 @@ void draw()
   {
     // vSort(iX, iY, fX, fY, out);
   }
+  img.loadPixels();
+  color c = img.pixels[0];
+  Pxl p = new Pxl(c);
+  p.verbose();
+  println("H,S,V,L: (76,21,xx,50)");
+  noLoop();
 }
 
 void mouseClicked()
@@ -70,45 +76,6 @@ void mouseClicked()
     fY = mouseY;
     selecting = false;
     drawing = true;
-  }
-}
-
-void vBrightSort (int minX, int minY, int maxX, int maxY, PGraphics p)
-{
-  //This is a paragon sorter
-  //In the javascript version, make it so that this works with a bunch of variables
-  //That whole manip(seed,goal,func){func(seed,goal)} thing
-  int col = minX; 
-  int row = minY * img.width + minX; 
-  //Below value should be something like "sorter value"
-  float[] bright = new float[(maxX-minX) * (maxY-minY)];
-  //PImage is stored as a single dimension array of pixels, so row is added to col to find the pixel location
-  int maxCol = maxX;
-  int maxRow = maxY * img.width + maxX;
-
-  out.image(img, 0, 0);
-  img.loadPixels();
-
-  while (row < maxRow)
-  {
-    //Stores all brightnesses of the selected region
-    
-    //Need to be able to remember the location of the original pixels before they were sorted
-    //May need to manually sort, create some kind of parallel sorter/scrambler
-    ////Which takes an unsorted array and a sorted array, then sorts the unsorted while unsorting the other
-    ////according to the sortedness of the first one. 
-   //Also remember that this needs to be on a row-by-row basis, so the sort and put needs to happen every row, not globally. 
-   
-    bright[col + row] = brightness(img.pixels[col+row]);
-
-    if (col >= maxCol)
-    {
-      row++;
-      col = 0;
-    } else
-    {
-      col++;
-    }
   }
 }
 
