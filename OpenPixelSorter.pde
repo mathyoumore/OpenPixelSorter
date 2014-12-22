@@ -56,7 +56,7 @@ void draw()
   }
   img.loadPixels();
   color c = img.pixels[0];
-  Pxl p = new Pxl(c);
+  ePixel p = new ePixel(c);
   p.verbose();
   println("H,S,V,L: (76,21,xx,50)");
   noLoop();
