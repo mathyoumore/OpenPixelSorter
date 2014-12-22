@@ -23,15 +23,15 @@ public class ePixel
     g = floor(green(c));
     b = floor(blue(c));
 
-    float tempR = r;
-    float tempG = g;
-    float tempB = b;  
+    float tempR = r / 255.0;
+    float tempG = g / 255.0;
+    float tempB = b / 255.0;  
 
     //CALCULATE HSL
     float max = max(tempR, tempG, tempB);
     float min = min(tempR, tempG, tempB);
-    h = floor(max + min / 2.0);
-    v = floor(max);
+    h = floor((max + min / 2.0)*100);
+    v = floor(max*100);
     if (max == min)
     {
       //Achromatic
@@ -54,19 +54,25 @@ public class ePixel
       }
       h = floor(h/6.0);
       //Calculate l
-      l =ceil((max+min)/2.0);
+      l =ceil(((max+min)/2.0)*100);
       //Calculate s
-      println("Saturation: " + s);
-      s = ceil(delta/(1-abs(2*l-1)));
-      println(1-abs(2*l-1));
-      println(delta/(1-abs(2*l-1)));
+      if (delta == 0)
+      {
+        s = 0;
+      } else
+      {
+        println("Saturation: " + s);
+        s = ceil((delta/(1-abs(2*l-1)))*100);
+        println(1-abs(2*l-1));
+        println(delta/(1-abs(2*l-1)));
+      }
     }
+  }
+
+  void verbose()
+  {
+    println("R,G,B: (" + r +"," + g + "," + b + ")");
+    println("H,S,V,L: (" + h +"," + s + "," + v + "," + l +")");
   }
 }
 
-void verbose()
-{
-  println("R,G,B: (" + r +"," + g + "," + b + ")");
-  println("H,S,V,L: (" + h +"," + s + "," + v + "," + l +")");
-}
-}
