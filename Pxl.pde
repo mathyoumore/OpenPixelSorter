@@ -1,4 +1,4 @@
-public class ePixel
+public class Pxl
 {
   int r;
   int g;
@@ -17,7 +17,7 @@ public class ePixel
   int originalLoc;
   int currentLoc;
 
-  ePixel(int c)
+  Pxl(int c)
   {
     r = floor(red(c));
     g = floor(green(c));
@@ -31,6 +31,8 @@ public class ePixel
     float max = max(tempR, tempG, tempB);
     float min = min(tempR, tempG, tempB);
     h = floor((max + min / 2.0)*100);
+    s = floor((max + min / 2.0)*100);
+    l = floor((max + min / 2.0)*100);
     v = floor(max*100);
     if (max == min)
     {
@@ -54,17 +56,14 @@ public class ePixel
       }
       h = floor(h/6.0);
       //Calculate l
-      l =ceil(((max+min)/2.0)*100);
+      l = ceil(((max+min)/2.0)*100);
       //Calculate s
       if (delta == 0)
       {
         s = 0;
       } else
       {
-        println("Saturation: " + s);
         s = ceil((delta/(1-abs(2*l-1)))*100);
-        println(1-abs(2*l-1));
-        println(delta/(1-abs(2*l-1)));
       }
     }
   }
