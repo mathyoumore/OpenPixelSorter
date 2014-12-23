@@ -23,6 +23,7 @@ Receive image (static for dev, upload for deployment)
 
 
 PGraphics outH, outS, outL, outV, outR, outG, outB;
+PGraphics deb;
 PImage img;
 ePixel ePixels[];
 String iname = "bird";
@@ -38,6 +39,7 @@ void setup()
   outR = createGraphics(width, height);
   outG = createGraphics(width, height);
   outB = createGraphics(width, height);
+  deb = createGraphics(width, height);
   ePixels = new ePixel[img.width];
 }
 
@@ -59,22 +61,26 @@ void draw()
       //ePixels[i].verbose();
     } 
     ePixel hueSorted[] = sortRowByHue(he);
-    ePixel satSorted[] = sortRowBySat(he);
-    ePixel lightSorted[] = sortRowByLight(he);
-    ePixel valueSorted[] = sortRowByValue(he);
-    ePixel redSorted[] = sortRowByRed(he);
-    ePixel greenSorted[] = sortRowByGreen(he);
-    ePixel blueSorted[] = sortRowByBlue(he);
+    //  ePixel satSorted[] = sortRowBySat(he);
+    // ePixel lightSorted[] = sortRowByLight(he, ePixels);
+    //  ePixel valueSorted[] = sortRowByValue(he);
+    // ePixel redSorted[] = sortRowByRed(he);
+    //  ePixel greenSorted[] = sortRowByGreen(he);
+    ePixel blueSorted[] = sortRowByBlue(he, ePixels);
     int pastV = 256; 
     for (int run = 0; run < img.width; run++)
     {
       outH.set(run, he, color(hueSorted[run].r, hueSorted[run].g, hueSorted[run].b));
-      outS.set(run, he, color(satSorted[run].r, satSorted[run].g, satSorted[run].b));
-      outL.set(run, he, color(lightSorted[run].r, lightSorted[run].g, lightSorted[run].b));
-      outV.set(run, he, color(valueSorted[run].r, valueSorted[run].g, valueSorted[run].b));
-      outR.set(run, he, color(redSorted[run].r, redSorted[run].g, redSorted[run].b));
-      outG.set(run, he, color(greenSorted[run].r, greenSorted[run].g, greenSorted[run].b));
+      //if (run == 100) { outH.set(run, he, color(255,0,0));}
+      //  outS.set(run, he, color(satSorted[run].r, satSorted[run].g, satSorted[run].b));
+      //    if (run == 200) { outS.set(run, he, color(0,255,0));}
+      //outL.set(run, he, color(lightSorted[run].r, lightSorted[run].g, lightSorted[run].b));
+      // if (run == 300) { outL.set(run, he, color(0,0,255));}
+      //   outV.set(run, he, color(valueSorted[run].r, valueSorted[run].g, valueSorted[run].b));
+      //   outR.set(run, he, color(redSorted[run].r, redSorted[run].g, redSorted[run].b));
+      //    outG.set(run, he, color(greenSorted[run].r, greenSorted[run].g, greenSorted[run].b));
       outB.set(run, he, color(blueSorted[run].r, blueSorted[run].g, blueSorted[run].b));
+      deb.set(run, he, color(ePixels[run].r, ePixels[run].g, ePixels[run].b));
     }
   }
 
@@ -85,6 +91,7 @@ void draw()
   outR.save(iname + "SortRed.png");
   outG.save(iname + "SortGreen.png");
   outB.save(iname + "SortBlue.png");
+  deb.save(iname + "SortDebug.png");
   //out.save("SortSaturation.png");
   //Remember to deal with row
   noLoop();
@@ -142,9 +149,9 @@ ePixel[] sortRowBySat(int row)
   return sorted;
 }
 
-ePixel[] sortRowByLight(int row)
+ePixel[] sortRowByLight(int row, ePixel[] o)
 {
-  ePixel sorted[] = ePixels; 
+  ePixel sorted[] = o; 
   int minAddress;
   int prevMin = 0;
   for (int j = 0; j < img.width-1; j++)
@@ -246,9 +253,14 @@ ePixel[] sortRowByGreen(int row)
   return sorted;
 }
 
-ePixel[] sortRowByBlue(int row)
+ePixel[] sortRowByBlue(int row, ePixel[] o)
 {
-  ePixel sorted[] = ePixels; 
+  ePixel[] sorted = new ePixel[img.width];
+  for (int i = 0; i < img.width; i++)
+  {
+    sorted[i] = new ePixel(0, 0);
+    sorted[i].copyFrom(ePixels[i]);
+  } 
   int minAddress;
   int prevMin = 0;
   for (int j = 0; j < img.width-1; j++)
@@ -267,6 +279,7 @@ ePixel[] sortRowByBlue(int row)
       ePixel tmp2 = sorted[minAddress];
       sorted[j] = tmp2;
       sorted[minAddress] = tmp1;
+      sorted[j].swap(sorted[minAddress]);
     }
   }
   return sorted;

@@ -14,7 +14,7 @@ public class ePixel
   //  int y;
   //  int k;
 
-  final int originalLoc;
+  int originalLoc;
   int currentLoc;
 
   ePixel(int c, int loc)
@@ -61,7 +61,7 @@ public class ePixel
       s = ceil(10000*(l > 50 ? delta/(2-(2*l)) : delta/(2*l)));
     }
     //END CACLULATE HSL
-    
+
     originalLoc = loc;
     currentLoc = loc;
   }
@@ -71,7 +71,25 @@ public class ePixel
     println("R,G,B: (" + r +"," + g + "," + b + ")");
     println("H,S,V,L: (" + h +"," + s + "," + v + "," + l +")");
   }
-  
- 
+
+  void copyFrom(ePixel blank)
+  {
+    this.r = blank.r;
+    this.g = blank.g;
+    this.b = blank.b;
+    this.h = blank.h;
+    this.s = blank.s;
+    this.l = blank.l;
+    this.v = blank.v;
+    this.originalLoc = blank.originalLoc;
+  }
+
+  void swap(ePixel b)
+  {
+    ePixel tmp1 = this;
+    ePixel tmp2 = b;
+    this.copyFrom(tmp2);
+    b.copyFrom(tmp1);
+  }
 }
 
