@@ -24,18 +24,17 @@ Receive image (static for dev, upload for deployment)
 
 PGraphics outH, outS, outL, outV, outR, outG, outB;
 PGraphics deb;
-PImage img;
+PImage img, copyImg;
 ePixel ePixels[];
-String iname = "bird";
+String iname = "redbird";
+
+float averageV;
 void setup()
 {
   img = loadImage(iname + ".jpg");
+  copyImg = loadImage(iname + ".jpg");
   size(img.width, img.height);
   rectMode(CORNERS);
-  outH = createGraphics(width, height);
-  outS = createGraphics(width, height);
-  outL = createGraphics(width, height);
-  outV = createGraphics(width, height);
   outR = createGraphics(width, height);
   outG = createGraphics(width, height);
   outB = createGraphics(width, height);
@@ -45,7 +44,10 @@ void setup()
 
 void draw()
 {
-
+  int topLim = floor(img.height/3.0);
+  int bottomLim = floor(2*img.height/3.0);
+  int leftLim = topLim;
+  int rightLim = bottomLim;
   //This is where you switch this to an upload/download to webpage thing
   image (img, 0, 0);
   stroke(255, 0, 0);
@@ -53,235 +55,160 @@ void draw()
   strokeWeight(1);
 
   img.loadPixels();
-  for (int he = 0; he < img.height; he++)
+  copyImg.loadPixels();
+  for (int he = topLim; he < bottomLim; he++)
   {
     for (int i = 0; i < img.width; i++)
     {
       ePixels[i] = new ePixel(img.pixels[i+(he*img.width)], i);
-      //ePixels[i].verbose();
     } 
-    ePixel hueSorted[] = sortRowByHue(he);
-    //  ePixel satSorted[] = sortRowBySat(he);
-    // ePixel lightSorted[] = sortRowByLight(he, ePixels);
-    //  ePixel valueSorted[] = sortRowByValue(he);
-    // ePixel redSorted[] = sortRowByRed(he);
-    //  ePixel greenSorted[] = sortRowByGreen(he);
-    ePixel blueSorted[] = sortRowByBlue(he, ePixels);
-    int pastV = 256; 
-    for (int run = 0; run < img.width; run++)
-    {
-      outH.set(run, he, color(hueSorted[run].r, hueSorted[run].g, hueSorted[run].b));
-      //if (run == 100) { outH.set(run, he, color(255,0,0));}
-      //  outS.set(run, he, color(satSorted[run].r, satSorted[run].g, satSorted[run].b));
-      //    if (run == 200) { outS.set(run, he, color(0,255,0));}
-      //outL.set(run, he, color(lightSorted[run].r, lightSorted[run].g, lightSorted[run].b));
-      // if (run == 300) { outL.set(run, he, color(0,0,255));}
-      //   outV.set(run, he, color(valueSorted[run].r, valueSorted[run].g, valueSorted[run].b));
-      //   outR.set(run, he, color(redSorted[run].r, redSorted[run].g, redSorted[run].b));
-      //    outG.set(run, he, color(greenSorted[run].r, greenSorted[run].g, greenSorted[run].b));
-      outB.set(run, he, color(blueSorted[run].r, blueSorted[run].g, blueSorted[run].b));
-      deb.set(run, he, color(ePixels[run].r, ePixels[run].g, ePixels[run].b));
-    }
-  }
+    /* ePixel redSorted[] = sortRowByRed(he);
+     
+     ePixel greenSorted[] = sortRowByGreen(he);
+     
+     ePixel blueSorted[] = sortRowByBlue(he);
+     int pastV = 256;
+     */
+    //hardSortByRed(he);
 
-  outH.save(iname + "SortHue.png");
-  outS.save(iname + "SortSat.png");
-  outL.save(iname + "SortLight.png");
-  outV.save(iname + "SortValue.png");
-  outR.save(iname + "SortRed.png");
-  outG.save(iname + "SortGreen.png");
-  outB.save(iname + "SortBlue.png");
-  deb.save(iname + "SortDebug.png");
+    hardSortByLight(he, leftLim, rightLim);
+
+    /* for (int run = 0; run < img.width; run++)
+     {
+     outR.set(run, he, color(redSorted[run].r, redSorted[run].g, redSorted[run].b));
+     outG.set(run, he, color(greenSorted[run].r, greenSorted[run].g, greenSorted[run].b));
+     outB.set(run, he, color(blueSorted[run].r, blueSorted[run].g, blueSorted[run].b));
+     deb.set(run, he, color(ePixels[run].r, ePixels[run].g, ePixels[run].b));
+     }*/
+  }
+  copyImg.save(iname + "SortLightHard.png");
+  //copyImg.save(iname + "SortRedHard.png");
+  //  outR.save(iname + "SortRed.png");
+  //  outG.save(iname + "SortGreen.png");
+  //  outB.save(iname + "SortBlue.png");
+  //  deb.save(iname + "SortDebug.png");
+  // copyImg.save(iname + "SortRedHard.png");
   //out.save("SortSaturation.png");
   //Remember to deal with row
+  image(copyImg, 0, 0);
+  println("Infidelity: " + (averageV/img.height));
   noLoop();
 }
 
-ePixel[] sortRowByHue(int row)
+void hardSortByLight(int row, int leftLim, int rightLim)
 {
-  ePixel sorted[] = ePixels; 
-  int minAddress;
-  int prevMin = 0;
-  for (int j = 0; j < img.width-1; j++)
+  float lDel, lDelMin;
+  int minAddress = 0;
+  float prevMin = 0;
+  int swaps = 0;
+  int dummy = 0;
+  for (int j = leftLim; j < rightLim; j++)
   {
     minAddress = j;
-    for (int i = j + 1; i < img.width; i++)
+    lDelMin = 256;
+    for (int i = (j + 1); i < rightLim; i++)
     {
-      if (sorted[i].h < sorted[minAddress].h)
+      lDel = getLDelta(copyImg.pixels[i+(row*img.width)]);
+      if (lDel < lDelMin)
       {
         minAddress = i;
+        lDelMin = lDel;
       }
     }
     if (j != minAddress)
     {
-      ePixel tmp1 = sorted[j];
-      ePixel tmp2 = sorted[minAddress];
-      sorted[j] = tmp2;
-      sorted[minAddress] = tmp1;
+      //println(lDelMin);
+      color a = copyImg.pixels[j+(row*img.width)];
+      color b = copyImg.pixels[minAddress+(row*img.width)];
+      copyImg.pixels[j+(row*img.width)] = b;
+      copyImg.pixels[minAddress+(row*img.width)] = a;
+      swaps++;
+      if (j > 1 && copyImg.pixels[j+(row*img.width)] < copyImg.pixels[j-1+(row*img.width)])
+      {
+        dummy++;
+      }
     }
   }
-  return sorted;
+  int v = 0;
+  for (int i = leftLim; i < rightLim; i++)
+  {
+    if (i < (img.width-1) && (getLDelta(copyImg.pixels[i+(row*img.width)]) < getLDelta(copyImg.pixels[i+1+(row*img.width)])))
+    {  
+      //copyImg.pixels[i+(row*img.width)] = color(255, 255, 0);
+      v++;
+      println(i + " is less than " + (i+1));
+    }
+  }
+  //  println("Second Row " + row + " violations: " + v + " out of " + img.width);
+  averageV += v;
+  println("I'm a dummy x" + dummy);
+  println("Row " + row + " violations: " + v + ", swaps: " + swaps);
 }
 
-ePixel[] sortRowBySat(int row)
+float getLDelta(color c)
 {
-  ePixel sorted[] = ePixels; 
-  int minAddress;
-  int prevMin = 0;
-  for (int j = 0; j < img.width-1; j++)
-  {
-    minAddress = j;
-    for (int i = j + 1; i < img.width; i++)
-    {
-      if (sorted[i].s < sorted[minAddress].s)
-      {
-        minAddress = i;
-      }
-    }
-    if (j != minAddress)
-    {
-      ePixel tmp1 = sorted[j];
-      ePixel tmp2 = sorted[minAddress];
-      sorted[j] = tmp2;
-      sorted[minAddress] = tmp1;
-    }
-  }
-  return sorted;
+  float l = floor(max(red(c), green(c), blue(c))+min(red(c), green(c), blue(c)));
+  l = l/255;
+  l = l/2;
+  l *= 100;
+  //println(l);
+  return l;
 }
 
-ePixel[] sortRowByLight(int row, ePixel[] o)
+void hardSortByRed(int row)
 {
-  ePixel sorted[] = o; 
-  int minAddress;
-  int prevMin = 0;
-  for (int j = 0; j < img.width-1; j++)
+  int leftLim = floor(img.width/5.0);
+  int rightLim = floor(4*img.width/5.0);
+  float rDel, rDelMin;
+  int minAddress = 0;
+  float prevMin = 0;
+  for (int j = leftLim; j < rightLim; j++)
   {
     minAddress = j;
-    for (int i = j + 1; i < img.width; i++)
+    rDelMin = 256;
+    for (int i = (j + 1); i < rightLim; i++)
     {
-      if (sorted[i].l < sorted[minAddress].l)
+      rDel = getRDelta(copyImg.pixels[i+(row*img.width)]);
+      if (rDel < rDelMin)
       {
         minAddress = i;
+        rDelMin = rDel;
       }
     }
     if (j != minAddress)
     {
-      ePixel tmp1 = sorted[j];
-      ePixel tmp2 = sorted[minAddress];
-      sorted[j] = tmp2;
-      sorted[minAddress] = tmp1;
+      color a = copyImg.pixels[j+(row*img.width)];
+      color b = copyImg.pixels[minAddress+(row*img.width)];
+      copyImg.pixels[j+(row*img.width)] = b;
+      copyImg.pixels[minAddress+(row*img.width)] = a;
     }
   }
-  return sorted;
+  int v = 0;
+  for (int i = leftLim; i < rightLim; i++)
+  {
+    if (i < (img.width-1) && (getRDelta(copyImg.pixels[i+(row*img.width)]) < getRDelta(copyImg.pixels[i+1+(row*img.width)])))
+    {        
+      v++;
+    }
+  }
+  //  println("Second Row " + row + " violations: " + v + " out of " + img.width);
+  averageV += v;
 }
 
-ePixel[] sortRowByValue(int row)
+
+int getRDelta(color c)
 {
-  ePixel sorted[] = ePixels; 
-  int minAddress;
-  int prevMin = 0;
-  for (int j = 0; j < img.width-1; j++)
-  {
-    minAddress = j;
-    for (int i = j + 1; i < img.width; i++)
-    {
-      if (sorted[i].v < sorted[minAddress].v)
-      {
-        minAddress = i;
-      }
-    }
-    if (j != minAddress)
-    {
-      ePixel tmp1 = sorted[j];
-      ePixel tmp2 = sorted[minAddress];
-      sorted[j] = tmp2;
-      sorted[minAddress] = tmp1;
-    }
-  }
-  return sorted;
+  return floor(red(c)-green(c)-blue(c));
 }
 
-ePixel[] sortRowByRed(int row)
+int getGDelta(color c)
 {
-  ePixel sorted[] = ePixels; 
-  int minAddress;
-  int prevMin = 0;
-  for (int j = 0; j < img.width-1; j++)
-  {
-    minAddress = j;
-    for (int i = j + 1; i < img.width; i++)
-    {
-      if (sorted[i].r < sorted[minAddress].r)
-      {
-        minAddress = i;
-      }
-    }
-    if (j != minAddress)
-    {
-      ePixel tmp1 = sorted[j];
-      ePixel tmp2 = sorted[minAddress];
-      sorted[j] = tmp2;
-      sorted[minAddress] = tmp1;
-    }
-  }
-  return sorted;
+  return floor(green(c)-blue(c)-red(c));
 }
 
-ePixel[] sortRowByGreen(int row)
+int getBDelta(color c)
 {
-  ePixel sorted[] = ePixels; 
-  int minAddress;
-  int prevMin = 0;
-  for (int j = 0; j < img.width-1; j++)
-  {
-    minAddress = j;
-    for (int i = j + 1; i < img.width; i++)
-    {
-      if (sorted[i].g < sorted[minAddress].g)
-      {
-        minAddress = i;
-      }
-    }
-    if (j != minAddress)
-    {
-      ePixel tmp1 = sorted[j];
-      ePixel tmp2 = sorted[minAddress];
-      sorted[j] = tmp2;
-      sorted[minAddress] = tmp1;
-    }
-  }
-  return sorted;
+  return floor(blue(c)-red(c)-green(c));
 }
 
-ePixel[] sortRowByBlue(int row, ePixel[] o)
-{
-  ePixel[] sorted = new ePixel[img.width];
-  for (int i = 0; i < img.width; i++)
-  {
-    sorted[i] = new ePixel(0, 0);
-    sorted[i].copyFrom(ePixels[i]);
-  } 
-  int minAddress;
-  int prevMin = 0;
-  for (int j = 0; j < img.width-1; j++)
-  {
-    minAddress = j;
-    for (int i = j + 1; i < img.width; i++)
-    {
-      if (sorted[i].b < sorted[minAddress].b)
-      {
-        minAddress = i;
-      }
-    }
-    if (j != minAddress)
-    {
-      ePixel tmp1 = sorted[j];
-      ePixel tmp2 = sorted[minAddress];
-      sorted[j] = tmp2;
-      sorted[minAddress] = tmp1;
-      sorted[j].swap(sorted[minAddress]);
-    }
-  }
-  return sorted;
-}
 

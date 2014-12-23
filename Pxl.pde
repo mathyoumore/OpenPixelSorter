@@ -1,14 +1,17 @@
 public class ePixel
 {
-  int r;
-  int g;
-  int b;
+  float r;
+  float g;
+  float b;
 
-  int h;
-  int s;
-  int l;
-  int v;
+  float h;
+  float s;
+  float l;
+  float v;
 
+  float rDel;
+  float gDel;
+  float bDel;
   //  int c;
   //  int m;
   //  int y;
@@ -19,9 +22,13 @@ public class ePixel
 
   ePixel(int c, int loc)
   {
-    r = floor(red(c));
-    g = floor(green(c));
-    b = floor(blue(c));
+    r = red(c);
+    g = green(c);
+    b = blue(c);
+
+    rDel = r - g - b;
+    gDel = g - r - b;
+    bDel = b - r - g;
 
     float tempR = r / 255.0;
     float tempG = g / 255.0;
@@ -30,10 +37,10 @@ public class ePixel
     //CALCULATE HSL
     float max = max(tempR, tempG, tempB);
     float min = min(tempR, tempG, tempB);
-    h = floor((max + min / 2.0)*100);
-    s = floor((max + min / 2.0)*100);
-    l = floor((max + min / 2.0)*100);
-    v = floor(max*100);
+    h = (max + min / 2.0)*100;
+    s = (max + min / 2.0)*100;
+    l = (max + min / 2.0)*100;
+    v = max*100;
     if (max == min)
     {
       //Achromatic
@@ -45,20 +52,20 @@ public class ePixel
       //      s > 0.5 ? d / (2 - max - min) : d /(max + min);
       if (max == tempR) 
       {
-        h = floor((g - b) / delta + (g < b ? 6 : 0));
+        h = (g - b) / delta + (g < b ? 6 : 0);
       } else if (max == tempG)
       { 
-        h = floor((b - r) / delta + 2);
+        h = (b - r) / delta + 2;
       }
       if (max == tempB)
       { 
-        h = floor((r - g) / delta + 4);
+        h = (r - g) / delta + 4;
       }
-      h = floor(h/6.0);
+      h = h/6.0;
       //Calculate l
-      l = ceil(((max+min)/2.0)*100);
+      l = ((max+min)/2.0)*100;
       //Calculate s
-      s = ceil(10000*(l > 50 ? delta/(2-(2*l)) : delta/(2*l)));
+      s = 10000*(l > 50 ? delta/(2-(2*l)) : delta/(2*l));
     }
     //END CACLULATE HSL
 
@@ -90,6 +97,18 @@ public class ePixel
     ePixel tmp2 = b;
     this.copyFrom(tmp2);
     b.copyFrom(tmp1);
+  }
+
+  void init()
+  {
+    this.h = 0;
+    this.s = 0;
+    this.l = 0;
+    this.v = 0;
+    this.r = 0;
+    this.g = 0;
+    this.b = 0;
+    this.originalLoc = 0;
   }
 }
 
