@@ -22,19 +22,23 @@ Receive image (static for dev, upload for deployment)
  */
 
 
-PGraphics out;
+PGraphics outH, outS, outL, outV, outR, outG, outB;
 PImage img;
-int iX = 0, iY = 0; //Initial coords for selection draw
-int fX = 0, fY = 0; //Final coords for selection draw
-boolean selecting = false;
-boolean drawing = false;
-
+ePixel ePixels[];
+String iname = "bird";
 void setup()
 {
-  img = loadImage("http://www.sqrlbee.com/3001/MattMohr/bird.jpg");
+  img = loadImage(iname + ".jpg");
   size(img.width, img.height);
   rectMode(CORNERS);
-  out = createGraphics(width, height);
+  outH = createGraphics(width, height);
+  outS = createGraphics(width, height);
+  outL = createGraphics(width, height);
+  outV = createGraphics(width, height);
+  outR = createGraphics(width, height);
+  outG = createGraphics(width, height);
+  outB = createGraphics(width, height);
+  ePixels = new ePixel[img.width];
 }
 
 void draw()
@@ -45,37 +49,226 @@ void draw()
   stroke(255, 0, 0);
   noFill();
   strokeWeight(1);
-  if (selecting && !drawing)
-  {
-    fX = mouseX;
-    fY = mouseY;
-    rect(iX, iY, fX, fY);
-  } else if (fX != iX || fY != iY) //Temporary, should be a prompt
-  {
-    // vSort(iX, iY, fX, fY, out);
-  }
+
   img.loadPixels();
-  color c = img.pixels[0];
-  Pxl p = new Pxl(c);
-  p.verbose();
-  println("H,S,V,L: (76,21,xx,50)");
+  for (int he = 0; he < img.height; he++)
+  {
+    for (int i = 0; i < img.width; i++)
+    {
+      ePixels[i] = new ePixel(img.pixels[i+(he*img.width)], i);
+      //ePixels[i].verbose();
+    } 
+    ePixel hueSorted[] = sortRowByHue(he);
+    ePixel satSorted[] = sortRowBySat(he);
+    ePixel lightSorted[] = sortRowByLight(he);
+    ePixel valueSorted[] = sortRowByValue(he);
+    ePixel redSorted[] = sortRowByRed(he);
+    ePixel greenSorted[] = sortRowByGreen(he);
+    ePixel blueSorted[] = sortRowByBlue(he);
+    int pastV = 256; 
+    for (int run = 0; run < img.width; run++)
+    {
+      outH.set(run, he, color(hueSorted[run].r, hueSorted[run].g, hueSorted[run].b));
+      outS.set(run, he, color(satSorted[run].r, satSorted[run].g, satSorted[run].b));
+      outL.set(run, he, color(lightSorted[run].r, lightSorted[run].g, lightSorted[run].b));
+      outV.set(run, he, color(valueSorted[run].r, valueSorted[run].g, valueSorted[run].b));
+      outR.set(run, he, color(redSorted[run].r, redSorted[run].g, redSorted[run].b));
+      outG.set(run, he, color(greenSorted[run].r, greenSorted[run].g, greenSorted[run].b));
+      outB.set(run, he, color(blueSorted[run].r, blueSorted[run].g, blueSorted[run].b));
+    }
+  }
+
+  outH.save(iname + "SortHue.png");
+  outS.save(iname + "SortSat.png");
+  outL.save(iname + "SortLight.png");
+  outV.save(iname + "SortValue.png");
+  outR.save(iname + "SortRed.png");
+  outG.save(iname + "SortGreen.png");
+  outB.save(iname + "SortBlue.png");
+  //out.save("SortSaturation.png");
+  //Remember to deal with row
   noLoop();
 }
 
-void mouseClicked()
+ePixel[] sortRowByHue(int row)
 {
-  if (!selecting)
+  ePixel sorted[] = ePixels; 
+  int minAddress;
+  int prevMin = 0;
+  for (int j = 0; j < img.width-1; j++)
   {
-    drawing = false;
-    iX = mouseX;
-    iY = mouseY;
-    selecting = true;
-  } else
-  {
-    fX = mouseX;
-    fY = mouseY;
-    selecting = false;
-    drawing = true;
+    minAddress = j;
+    for (int i = j + 1; i < img.width; i++)
+    {
+      if (sorted[i].h < sorted[minAddress].h)
+      {
+        minAddress = i;
+      }
+    }
+    if (j != minAddress)
+    {
+      ePixel tmp1 = sorted[j];
+      ePixel tmp2 = sorted[minAddress];
+      sorted[j] = tmp2;
+      sorted[minAddress] = tmp1;
+    }
   }
+  return sorted;
+}
+
+ePixel[] sortRowBySat(int row)
+{
+  ePixel sorted[] = ePixels; 
+  int minAddress;
+  int prevMin = 0;
+  for (int j = 0; j < img.width-1; j++)
+  {
+    minAddress = j;
+    for (int i = j + 1; i < img.width; i++)
+    {
+      if (sorted[i].s < sorted[minAddress].s)
+      {
+        minAddress = i;
+      }
+    }
+    if (j != minAddress)
+    {
+      ePixel tmp1 = sorted[j];
+      ePixel tmp2 = sorted[minAddress];
+      sorted[j] = tmp2;
+      sorted[minAddress] = tmp1;
+    }
+  }
+  return sorted;
+}
+
+ePixel[] sortRowByLight(int row)
+{
+  ePixel sorted[] = ePixels; 
+  int minAddress;
+  int prevMin = 0;
+  for (int j = 0; j < img.width-1; j++)
+  {
+    minAddress = j;
+    for (int i = j + 1; i < img.width; i++)
+    {
+      if (sorted[i].l < sorted[minAddress].l)
+      {
+        minAddress = i;
+      }
+    }
+    if (j != minAddress)
+    {
+      ePixel tmp1 = sorted[j];
+      ePixel tmp2 = sorted[minAddress];
+      sorted[j] = tmp2;
+      sorted[minAddress] = tmp1;
+    }
+  }
+  return sorted;
+}
+
+ePixel[] sortRowByValue(int row)
+{
+  ePixel sorted[] = ePixels; 
+  int minAddress;
+  int prevMin = 0;
+  for (int j = 0; j < img.width-1; j++)
+  {
+    minAddress = j;
+    for (int i = j + 1; i < img.width; i++)
+    {
+      if (sorted[i].v < sorted[minAddress].v)
+      {
+        minAddress = i;
+      }
+    }
+    if (j != minAddress)
+    {
+      ePixel tmp1 = sorted[j];
+      ePixel tmp2 = sorted[minAddress];
+      sorted[j] = tmp2;
+      sorted[minAddress] = tmp1;
+    }
+  }
+  return sorted;
+}
+
+ePixel[] sortRowByRed(int row)
+{
+  ePixel sorted[] = ePixels; 
+  int minAddress;
+  int prevMin = 0;
+  for (int j = 0; j < img.width-1; j++)
+  {
+    minAddress = j;
+    for (int i = j + 1; i < img.width; i++)
+    {
+      if (sorted[i].r < sorted[minAddress].r)
+      {
+        minAddress = i;
+      }
+    }
+    if (j != minAddress)
+    {
+      ePixel tmp1 = sorted[j];
+      ePixel tmp2 = sorted[minAddress];
+      sorted[j] = tmp2;
+      sorted[minAddress] = tmp1;
+    }
+  }
+  return sorted;
+}
+
+ePixel[] sortRowByGreen(int row)
+{
+  ePixel sorted[] = ePixels; 
+  int minAddress;
+  int prevMin = 0;
+  for (int j = 0; j < img.width-1; j++)
+  {
+    minAddress = j;
+    for (int i = j + 1; i < img.width; i++)
+    {
+      if (sorted[i].g < sorted[minAddress].g)
+      {
+        minAddress = i;
+      }
+    }
+    if (j != minAddress)
+    {
+      ePixel tmp1 = sorted[j];
+      ePixel tmp2 = sorted[minAddress];
+      sorted[j] = tmp2;
+      sorted[minAddress] = tmp1;
+    }
+  }
+  return sorted;
+}
+
+ePixel[] sortRowByBlue(int row)
+{
+  ePixel sorted[] = ePixels; 
+  int minAddress;
+  int prevMin = 0;
+  for (int j = 0; j < img.width-1; j++)
+  {
+    minAddress = j;
+    for (int i = j + 1; i < img.width; i++)
+    {
+      if (sorted[i].b < sorted[minAddress].b)
+      {
+        minAddress = i;
+      }
+    }
+    if (j != minAddress)
+    {
+      ePixel tmp1 = sorted[j];
+      ePixel tmp2 = sorted[minAddress];
+      sorted[j] = tmp2;
+      sorted[minAddress] = tmp1;
+    }
+  }
+  return sorted;
 }
 

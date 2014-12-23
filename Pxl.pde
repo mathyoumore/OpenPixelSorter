@@ -1,4 +1,4 @@
-public class Pxl
+public class ePixel
 {
   int r;
   int g;
@@ -14,10 +14,10 @@ public class Pxl
   //  int y;
   //  int k;
 
-  int originalLoc;
+  final int originalLoc;
   int currentLoc;
 
-  Pxl(int c)
+  ePixel(int c, int loc)
   {
     r = floor(red(c));
     g = floor(green(c));
@@ -58,14 +58,12 @@ public class Pxl
       //Calculate l
       l = ceil(((max+min)/2.0)*100);
       //Calculate s
-      if (delta == 0)
-      {
-        s = 0;
-      } else
-      {
-        s = ceil((delta/(1-abs(2*l-1)))*100);
-      }
+      s = ceil(10000*(l > 50 ? delta/(2-(2*l)) : delta/(2*l)));
     }
+    //END CACLULATE HSL
+    
+    originalLoc = loc;
+    currentLoc = loc;
   }
 
   void verbose()
@@ -73,5 +71,7 @@ public class Pxl
     println("R,G,B: (" + r +"," + g + "," + b + ")");
     println("H,S,V,L: (" + h +"," + s + "," + v + "," + l +")");
   }
+  
+ 
 }
 
