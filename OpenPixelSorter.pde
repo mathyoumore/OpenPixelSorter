@@ -22,11 +22,20 @@ Receive image (static for dev, upload for deployment)
  */
 
 PGraphics deb;
-PImage img, outH, outS, outL, outV, outR, outG, outB;
+PImage img, outH, outS, outL, outV, outR, outG, outB, outBongio;
 PImage rCopy, gCopy, bCopy, hCopy, sCopy, lCopy;
+PGraphics bongioCopy;
 ePixel ePixels[];
-String iname = "gr4096big";
+String iname = "cocoteel";
 String inExt = ".jpg";
+
+boolean selecting = true;
+boolean finalizing = false;
+boolean drawing = false;
+int topLim = 0;
+int bottomLim = 0;
+int leftLim = 0;
+int rightLim = 0;
 
 float averageV;
 void setup()
@@ -38,6 +47,8 @@ void setup()
   hCopy = loadImage(iname + inExt);
   sCopy = loadImage(iname + inExt);
   lCopy = loadImage(iname + inExt);
+  bongioCopy = createGraphics(img.width, img.height);
+  bongioCopy.copy(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
   size(img.width, img.height);
   rectMode(CORNERS);
   ePixels = new ePixel[img.width];
@@ -45,41 +56,139 @@ void setup()
 
 void draw()
 {
-  int topLim = 0;
-  int bottomLim = height;
-  int leftLim = topLim;
-  int rightLim = width;
-  //This is where you switch this to an upload/download to webpage thing
-  image (img, 0, 0);
-  stroke(255, 0, 0);
-  noFill();
-  strokeWeight(1);
-
-  img.loadPixels();
-  rCopy.loadPixels();
-  int t = millis();
-  float tRow = millis();
-  for (int he = topLim; he < bottomLim; he++)
+  bongioCopy.beginDraw();
+  image(img, 0, 0);
+  if (selecting || finalizing)
   {
-    if (he % 100 == 0) {
-      println("Row " + he + " " + tRow/100.0 + " per row, probably " );
-      tRow = millis() - tRow;
+    stroke(255, 0, 0);
+    line(mouseX, 0, mouseX, height);
+    line(0, mouseY, width, mouseY);
+    if (finalizing)
+    {
+      noFill();
+      rect(leftLim, topLim, mouseX, mouseY);
     }
-    outR = hardSortByRed(rCopy, he, leftLim, rightLim);
-    outG = hardSortByGreen(gCopy, he, leftLim, rightLim);
-    outB = hardSortByBlue(bCopy, he, leftLim, rightLim);
-    outH = hardSortByHue(hCopy, he, leftLim, rightLim);
-    outS = hardSortBySat(sCopy, he, leftLim, rightLim);
-    outL = hardSortByLight(lCopy, he, leftLim, rightLim);
+  } else if (drawing)
+  {
+    //This is where you switch this to an upload/download to webpage thing
+    image (img, 0, 0);
+    stroke(255, 0, 0);
+    noFill();
+    strokeWeight(1);
+
+    img.loadPixels();
+    rCopy.loadPixels();
+    int t = millis();
+    float tRow = millis();
+    for (int he = topLim; he < bottomLim; he++)
+    {
+      if (he % 100 == 0) {
+        //  println("Row " + he + " " + tRow/100.0 + " per row, probably " );
+        tRow = millis() - tRow;
+      }
+      outR = hardSortByRed(rCopy, he, leftLim, rightLim);
+      outG = hardSortByGreen(gCopy, he, leftLim, rightLim);
+      outB = hardSortByBlue(bCopy, he, leftLim, rightLim);
+      outH = hardSortByHue(hCopy, he, leftLim, rightLim);
+      outS = hardSortBySat(sCopy, he, leftLim, rightLim);
+      outL = hardSortByLight(lCopy, he, leftLim, rightLim);
+    }
+    outBongio = bongiovanniSort(bongioCopy, leftLim, topLim, rightLim, bottomLim, 0.0);
+    outBongio.save(iname + "SortBongio.png");
+    outR.save(iname + "SortRed.png");
+    outG.save(iname + "SortGreen.png");
+    outB.save(iname + "SortBlue.png");
+    outH.save(iname + "SortHue.png");
+    outS.save(iname + "SortSat.png");
+    outL.save(iname + "SortLight.png");
+    println("Time taken to sort: " + (millis()-t)/1000);
+    noLoop();
+    drawing = false;
+    finalizing = false;
+    selecting = true;
+    bongioCopy.endDraw();
   }
-  outR.save(iname + "SortRed.png");
-  outG.save(iname + "SortGreen.png");
-  outB.save(iname + "SortBlue.png");
-  outH.save(iname + "SortHue.png");
-  outS.save(iname + "SortSat.png");
-  outL.save(iname + "SortLight.png");
-  println("Time taken to sort: " + (millis()-t)/1000);
-  noLoop();
+}
+
+void mousePressed()
+{
+  if (selecting)
+  {
+    topLim = mouseY;
+    leftLim = mouseX;
+    selecting = false;
+    finalizing = true;
+  } else if (finalizing)
+  {
+    if (mouseX < leftLim)
+    {
+      rightLim = leftLim;
+      leftLim = mouseX;
+    } else
+    {
+      rightLim = mouseX;
+    }
+    if (mouseY < bottomLim)
+    {
+      bottomLim = topLim;
+      topLim = mouseY;
+    } else
+    {
+      bottomLim = mouseY;
+    }
+    drawing = true;
+    finalizing = false;
+    selecting = false;
+  }
+}
+
+PImage bongiovanniSort(PGraphics copyImg, int row, int col, int wide, int tall, float angle)
+{
+  /*
+  Receive image and coordinate of the point to start drawing
+   Copy pixels starting at (row,col) and going for wide
+   Repeat copied pixels for tall
+   
+   - ANGLE should determine angle of melting
+   - Need to get the bulb at the bottom
+   - Layering strands
+   
+   */
+   
+  int actualWidth = wide-row;
+  float halfWidth = (wide-row)/2.0;
+  color c[] = new color[wide-row];
+  for (int i = 0; i < actualWidth; i++)
+  {
+    c[i] = img.pixels[i+row+(col*copyImg.width)];
+  }
+  //Drip
+  for (int r = 0; r < actualWidth; r++)
+  {
+    copyImg.noStroke();
+    if (r <= floor(halfWidth)) { 
+      copyImg.fill(c[floor(r/2.0)]);
+//      copyImg.fill(r*2);
+      copyImg.arc((row+wide)/2.0, tall*1.0, float(actualWidth-r), float(actualWidth-r), HALF_PI, PI);
+    } 
+    if (r > floor(halfWidth) ){ 
+      copyImg.fill(c[floor(r)-floor(halfWidth)]);
+//      copyImg.fill(r*2-halfWidth*2);
+      copyImg.arc((row+wide)/2.0, tall*1.0, float(actualWidth-r)+halfWidth, float(actualWidth-r)+halfWidth, 0, HALF_PI);
+    } 
+    //copyImg.ellipse((row+wide)/2.0, tall*1.0, (wide-row) - r, (wide-row) - r);
+
+    println(wide-row-r);
+  }
+  //Drop
+  for (int h = 0; h < floor (tall-col); h++)
+  {
+    for (int i = 0; i < wide-row; i++)
+    {
+      copyImg.set((i + row), col+h, c[i]);
+    }
+  }
+  return copyImg;
 }
 
 PImage hardSortByRed(PImage copyImg, int row, int leftLim, int rightLim)
