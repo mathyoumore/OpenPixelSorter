@@ -95,13 +95,14 @@ void draw()
     }
     outBongio = bongiovanniSort(bongioCopy, leftLim, topLim, rightLim, bottomLim, 0.0);
     outBongio.save(iname + "SortBongio.png");
-    outR.save(iname + "SortRed.png");
-    outG.save(iname + "SortGreen.png");
-    outB.save(iname + "SortBlue.png");
-    outH.save(iname + "SortHue.png");
-    outS.save(iname + "SortSat.png");
-    outL.save(iname + "SortLight.png");
+    /* outR.save(iname + "SortRed.png");
+     outG.save(iname + "SortGreen.png");
+     outB.save(iname + "SortBlue.png");
+     outH.save(iname + "SortHue.png");
+     outS.save(iname + "SortSat.png");
+     outL.save(iname + "SortLight.png");*/
     println("Time taken to sort: " + (millis()-t)/1000);
+    image(outBongio, 0, 0);
     noLoop();
     drawing = false;
     finalizing = false;
@@ -154,32 +155,42 @@ PImage bongiovanniSort(PGraphics copyImg, int row, int col, int wide, int tall, 
    - Layering strands
    
    */
-   
   int actualWidth = wide-row;
   float halfWidth = (wide-row)/2.0;
-  color c[] = new color[wide-row];
+  color c[] = new color[actualWidth];
   for (int i = 0; i < actualWidth; i++)
   {
     c[i] = img.pixels[i+row+(col*copyImg.width)];
   }
   //Drip
+  println(actualWidth);
+  int half_r;
   for (int r = 0; r < actualWidth; r++)
   {
+    color ave;
+    
+    println("Going to " + actualWidth + " At " + r);
+    half_r = floor(r/2.0);
+    float divi = (2.0-(2/(half_r+1)));
+    ave = color((red(c[half_r])+red(c[(actualWidth-1)-(half_r)]))/divi,(green(c[half_r])+green(c[(actualWidth-1)-(half_r)]))/divi,(blue(c[half_r])+blue(c[(actualWidth-1)-(half_r)]))/divi);
+    copyImg.strokeWeight(0.5);
+    //copyImg.line(halfWidth+row, 0, halfWidth+row, height);
     copyImg.noStroke();
-    if (r <= floor(halfWidth)) { 
-      copyImg.fill(c[floor(r/2.0)]);
-//      copyImg.fill(r*2);
-      copyImg.arc((row+wide)/2.0, tall*1.0, float(actualWidth-r), float(actualWidth-r), HALF_PI, PI);
-    } 
-    if (r > floor(halfWidth) ){ 
-      copyImg.fill(c[floor(r)-floor(halfWidth)]);
-//      copyImg.fill(r*2-halfWidth*2);
-      copyImg.arc((row+wide)/2.0, tall*1.0, float(actualWidth-r)+halfWidth, float(actualWidth-r)+halfWidth, 0, HALF_PI);
-    } 
-    //copyImg.ellipse((row+wide)/2.0, tall*1.0, (wide-row) - r, (wide-row) - r);
-
-    println(wide-row-r);
+    copyImg.fill(c[half_r]);
+    //copyImg.fill(ave);
+    //      copyImg.fill(r*2);
+    copyImg.arc((row+wide)/2.0, tall*1.0, float(actualWidth-r), float(actualWidth-r), HALF_PI, PI);
   }
+  for (int r = 0; r < actualWidth; r++)
+  {
+    half_r = ceil(r/2.0);
+    println(actualWidth + " - " + half_r + " = " + (actualWidth-half_r));
+    copyImg.fill(c[(actualWidth-1)-(half_r)]);
+    //      copyImg.fill(r*2-halfWidth*2);
+    copyImg.arc((row+wide)/2.0, tall*1.0, float(actualWidth-r), float(actualWidth-r), 0, HALF_PI);
+  }
+  //copyImg.ellipse((row+wide)/2.0, tall*1.0, (wide-row) - r, (wide-row) - r);
+
   //Drop
   for (int h = 0; h < floor (tall-col); h++)
   {
